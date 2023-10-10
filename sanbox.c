@@ -53,6 +53,10 @@ char* argv[] = {NULL};
 
 
 int child_function(void* arg){
+    if(mount("proc", "/proc", "proc", 0, NULL) == -1){
+        perror("mount proc");
+        exit(1);
+    }
     if(execvp(argv[0], argv) == -1){
         assert(0);
     }
@@ -64,11 +68,27 @@ void sbx_run_sandbox(sbx_input* input){
     char child_stack[4096];
     argv[0] = input->path;
 
-    if(unshare(CLONE_NEWUSER | CLONE_NEWPID) == -1){
+    if(unshare(CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNS) == -1){
         perror("unshare");
         exit(1);
     }
 
+    // if(setgid(0) == -1 || setuid(0) == -1){
+    //     perror("setgid/setuid");
+    //     exit(1);
+    // }
+
+    if(mount("none", "/", NULL, MS_REC | MS_PRIVATE, NULL) == -1){
+        perror("mount");
+        exit(1);
+    }
+
+    if(chroot("containers/ubuntu/") == -1){
+        perror("chroot");
+        exit(1);
+    }
+
+    child_function(NULL);
     if(clone(child_function, child_stack + sizeof(child_stack), CLONE_VM | SIGCHLD, NULL) == -1){
         perror("clone");
         exit(1);
@@ -78,7 +98,6 @@ void sbx_run_sandbox(sbx_input* input){
         perror("wait");
         exit(1);
     }
-
 
 }
 
