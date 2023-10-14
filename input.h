@@ -1,6 +1,6 @@
 #ifndef SBX_INPUT
 #define SBX_INPUT
-#include <stdint.h>
+#include <stddef.h>
 
 /*
  * represents input process
@@ -10,9 +10,10 @@
  * root_dir - directory to chroot to
  */
 typedef struct {
-    char* path; // required
-    char* root_dir; // optional
-    uint8_t namespaces;
+    char* exec;     // [REQUIRED]
+    char* rootfs;   // [REQUIRED]
+    char* cli_par;  // [OPTIONAL]
+    size_t stack;   // [OPTIONAL]
 } sbx_input;
 
 /*

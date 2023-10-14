@@ -15,9 +15,14 @@ char* get_param_value(const char* name, int argc, char** argv){
 
 sbx_input* sbx_cli_create_process(int argc, char** argv){
     static sbx_input input;
-    input.path = get_param_value("--path", argc, argv);
-    input.root_dir = get_param_value("--root-dir", argc, argv);
-
+    input.exec = get_param_value("--exec", argc, argv);
+    if(input.exec == NULL){
+        return NULL;
+    }
+    input.rootfs = get_param_value("--rootfs", argc, argv);
+    if(input.rootfs == NULL){
+        return NULL;
+    }
 
     return &input;
 }

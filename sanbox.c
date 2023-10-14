@@ -15,9 +15,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-char* argv[] = {NULL};
-
 int child_function(void* arg){
+    sbx_input* input = (sbx_input*) arg;
 
     // for debug, check if it truly is in new PID namespace
     // should be PID=1
@@ -36,12 +35,11 @@ int child_function(void* arg){
 
     // we need to mount rbind it to self due to some API restraints
     // mount --rbind rootfs rootfs
-    chdir("containers");
-    if(mount("ubuntu", "ubuntu", NULL, MS_BIND | MS_REC, NULL) == -1){
+    if(mount(input->rootfs, input->rootfs, NULL, MS_BIND | MS_REC, NULL) == -1){
         perror("mount --rbind rootfs rootfs");
         return 1;
     }
-    chdir("ubuntu");
+    chdir(input->rootfs);
     mkdir("oldroot", 0777);
     if(pivot_root(".", "oldroot") == -1){
         perror("pivot_root");
@@ -56,7 +54,13 @@ int child_function(void* arg){
     }
 
     // umount -l oldroot
-    
+    if(umount2("oldroot", MNT_DETACH) == -1){
+        perror("umount -l oldroot");
+        return 1;
+    }
+
+    char* argv[256] = {NULL};
+    argv[0] = input->exec;
 
     if(execvp(argv[0], argv) == -1){
         perror("execvp");
@@ -68,7 +72,6 @@ void sbx_run_sandbox(sbx_input* input){
     if(!input) return;
 
     char child_stack[1024 * 1024];
-    argv[0] = input->path;
 
     if (unshare(CLONE_NEWUSER) == -1) {
         perror("unshare(CLONE_NEWPID) failed");
@@ -90,7 +93,7 @@ void sbx_run_sandbox(sbx_input* input){
     close(fd);
 
     // unsharing PID namespace works for the children of the process so we need to fork
-    pid_t child_pid = clone(child_function, child_stack + sizeof(child_stack), SIGCHLD | CLONE_NEWPID, NULL);
+    pid_t child_pid = clone(child_function, child_stack + sizeof(child_stack), SIGCHLD | CLONE_NEWPID, input);
     if(child_pid == -1){
         perror("clone");
     }
