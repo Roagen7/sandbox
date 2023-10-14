@@ -11,11 +11,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 char* argv[] = {NULL};
 
 int child_function(void* arg){
+
+    // for debug, check if it truly is in new PID namespace
+    // should be PID=1
     printf("%d\n", getpid());
 
     if(unshare(CLONE_NEWNS) == -1){
@@ -28,6 +33,30 @@ int child_function(void* arg){
         perror("mount -t proc proc /proc");
         return 1;
     }
+
+    // we need to mount rbind it to self due to some API restraints
+    // mount --rbind rootfs rootfs
+    chdir("containers");
+    if(mount("ubuntu", "ubuntu", NULL, MS_BIND | MS_REC, NULL) == -1){
+        perror("mount --rbind rootfs rootfs");
+        return 1;
+    }
+    chdir("ubuntu");
+    mkdir("oldroot", 0777);
+    if(pivot_root(".", "oldroot") == -1){
+        perror("pivot_root");
+        return 1;
+    };
+
+    // remount procfs because it gets unmounted >:(
+    // otherwise unmounting oldroot doesn't work
+    if(mount("proc", "/proc", "proc", 0, NULL) == -1){
+        perror("mount -t proc proc /proc");
+        return 1;
+    }
+
+    // umount -l oldroot
+    
 
     if(execvp(argv[0], argv) == -1){
         perror("execvp");
@@ -72,4 +101,3 @@ void sbx_run_sandbox(sbx_input* input){
     }
     printf("container exit %d", status);
 }
-

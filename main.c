@@ -1,3 +1,22 @@
+/* ============================================================
+ * Title: Simple POC of process containerization
+ * Author: Dominik Lau
+ * ============================================================
+ * Description: 
+ *  containerizes given process using namespaces and pivot_root
+ *  works for pre-made rootfs (so all dependencies are present)
+ * ============================================================
+ * Usage:
+ *  --exec <path_to_process>       [REQUIRED]
+ *      executes process provided in path
+ *      the process needs to be present in rootfs under that path
+ *  --rootfs <path_to_rootfs>      [REQUIRED]
+ *      path to premade rootfs (with all dependencies present
+ *      for --exec), fetching such image:
+ *      docker export $(docker create ubuntu) --output="image.tar"
+ * ============================================================
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 
