@@ -11,6 +11,7 @@
  */
 typedef struct {
     char* exec;     // [REQUIRED]
+    char* name;     // [REQUIRED]
     char* rootfs;   // [REQUIRED]
     char* cli_par;  // [OPTIONAL]
     size_t stack;   // [OPTIONAL]

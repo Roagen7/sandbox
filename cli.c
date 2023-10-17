@@ -23,6 +23,18 @@ sbx_input* sbx_cli_create_process(int argc, char** argv){
     if(input.rootfs == NULL){
         return NULL;
     }
+    input.name = get_param_value("--name", argc, argv);
+    if(input.name == NULL){
+        return NULL;
+    }
+
+    const char* stack = get_param_value("--stack", argc, argv);
+    if(stack){
+        input.stack = atoi(stack);
+        if(input.stack == 0) return NULL;        
+    } else {
+        input.stack = 1024 * 1024; // defaults to 1MiB
+    }
 
     return &input;
 }

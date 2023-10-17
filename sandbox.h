@@ -7,6 +7,7 @@
  * runs process in sandbox
  * @params
  * input - filled input with sandbox config
+ * @return 1 on failure, 0 on success
  */
-void sbx_run_sandbox(sbx_input* input);
+int sbx_run_sandbox(sbx_input* input);
 #endif
