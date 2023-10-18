@@ -28,6 +28,11 @@ sbx_input* sbx_cli_create_process(int argc, char** argv){
         return NULL;
     }
 
+    input.container_dir = get_param_value("--container_dir", argc, argv);
+    if(input.container_dir == NULL){
+        return NULL;
+    }
+
     const char* stack = get_param_value("--stack", argc, argv);
     if(stack){
         input.stack = atoi(stack);

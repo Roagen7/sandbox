@@ -10,17 +10,12 @@
  * root_dir - directory to chroot to
  */
 typedef struct {
-    char* exec;     // [REQUIRED]
-    char* name;     // [REQUIRED]
-    char* rootfs;   // [REQUIRED]
-    char* cli_par;  // [OPTIONAL]
-    size_t stack;   // [OPTIONAL]
+    char* exec;             // [REQUIRED]
+    char* name;             // [REQUIRED]
+    char* rootfs;           // [REQUIRED]
+    char* container_dir;    // [REQUIRED]
+    char* cli_par;          // [OPTIONAL]
+    size_t stack;           // [OPTIONAL]
 } sbx_input;
 
-/*
- * list of available namespaces to unshare
- */
-enum sbx_NAMESPACE {
-    STH = 1<<8,
-};
 #endif

@@ -28,6 +28,8 @@ void print_help(){
    "    path to premade rootfs (with all dependencies present for --exec)   \n"
    "    fetching such image:                                                \n"
    "    docker export $(docker create ubuntu) --output=\"image.tar\"        \n"
+   "--container_dir    <path>           [REQUIRED]                          \n"
+   "    path to EMPTY directory  the container will run in                  \n"
    "--cli_par   <params_enumeration>    [OPTIONAL]                          \n"
    "    specify process argv                                                \n"
    "--stack     <size>                  [OPTIONAL]                          \n"
