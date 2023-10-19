@@ -70,12 +70,13 @@ int boot_container(void* arg){
         perror("/ private");
         exit(1);
     };
-
+    
     char* new_root = setup_overlayfs(input);
+    // TODO: copy DNS configuration(/etc/resolv.conf) to new_root
     pivot_root(new_root);
     setup_mounts();
     setup_envs(input);
-
+	
     char* argv[256] = {NULL};
     argv[0] = input->exec;
     if(execvp(argv[0], argv) == -1){
@@ -142,8 +143,12 @@ void setup_mounts(){
  * hostname set to container name
  */
 void setup_envs(sbx_input* input){
+    clearenv();
     setenv("PATH", "/bin:/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin", 1);
-    unsetenv("LC_ALL");
+    setenv("TERM", "xterm", 1);
+    setenv("HOME", "/root", 1);
+    setenv("HOSTNAME", input->name, 1);
+    setenv("PWD", "/", 1);
     sethostname(input->name,strlen(input->name));
 }
 
