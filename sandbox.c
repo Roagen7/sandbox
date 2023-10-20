@@ -26,6 +26,8 @@ void pivot_root(char* new_root);
 void setup_envs(sbx_input* input);
 char* setup_overlayfs(sbx_input* input);
 int boot_container(void* arg);
+void setup_dns(char* new_root);
+
 
 int sbx_run_sandbox(sbx_input* input){
     if(!input) return 1;
@@ -72,7 +74,7 @@ int boot_container(void* arg){
     };
     
     char* new_root = setup_overlayfs(input);
-    // TODO: copy DNS configuration(/etc/resolv.conf) to new_root
+    setup_dns(new_root);
     pivot_root(new_root);
     setup_mounts();
     setup_envs(input);
@@ -86,8 +88,37 @@ int boot_container(void* arg){
 }
 
 /*
+ * mount /etc/resolv.conf, /etc/hostname and /etc/hosts
+ * inside container rootfs
+ */
+void setup_dns(char* new_root){
+    char* resolv_conf, *hostname, *hosts;
+    asprintf(&resolv_conf, "%s/etc/resolv.conf", new_root);
+    asprintf(&hostname, "%s/etc/hostname", new_root);
+    asprintf(&hosts, "%s/etc/hosts", new_root);
+
+
+    if(mount("/etc/resolv.conf", resolv_conf, "none", MS_BIND, "") == -1){
+        perror("mount resolv.conf");
+        exit(1);
+    }
+    if(mount("/etc/hostname", hostname, "none", MS_BIND, "") == -1){
+        perror("mount resolv.conf");
+        exit(1);
+    }
+    if(mount("/etc/hosts", hosts, "none", MS_BIND, "") == -1){
+        perror("mount resolv.conf");
+        exit(1);
+    }
+
+    free(resolv_conf);
+    free(hostname);
+    free(hosts);
+}
+
+/*
  * wrapper to system call pivot_root
- * esentially:
+ * essentially:
  *  mount --rbind overlay_upper overlay_upper
  *  mkdir oldroot
  *  pivot_root . oldroot
@@ -114,6 +145,7 @@ void pivot_root(char* new_root){
 /*
  * sets up all linux pseudofs
  * finishes up jailing (unmounts oldroot)
+ * IN THE FUTURE: it should be taken from config.json
  */
 void setup_mounts(){
     // setup procfs because it gets unmounted
@@ -141,6 +173,7 @@ void setup_mounts(){
 /*
  * environment variables clean-up
  * hostname set to container name
+ * IN THE FUTURE: it should be taken from config.json
  */
 void setup_envs(sbx_input* input){
     clearenv();
@@ -159,7 +192,6 @@ void setup_envs(sbx_input* input){
  *  work  -> container_dir/work 
  * 
  * which is mounted into container_dir
- * 
  */
 char* setup_overlayfs(sbx_input* input){
     char* overlay;
