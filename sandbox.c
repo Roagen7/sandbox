@@ -56,7 +56,11 @@ int sbx_run_sandbox(sbx_input* input){
     printf("container exit %d", status);
     free(child_stack);
 
-    // TODO: cleanup overlayfs
+    // cleanup overlayfs ~ live CD behavior
+    char* cleanup_command;
+    asprintf(&cleanup_command, "rm -rf %s/*", input->container_dir);
+    system(cleanup_command);
+    free(cleanup_command);
     return 0;
 }
 
