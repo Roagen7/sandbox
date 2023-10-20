@@ -4,6 +4,7 @@
 #define __USE_GNU
 #include <sched.h>
 #include <unistd.h>
+#include <sys/prctl.h>
 #undef __USE_GNU
 #undef _GNU_SOURCE
 
@@ -17,6 +18,7 @@
 #include <sys/syscall.h>
 #include <string.h>
 #include <errno.h>
+#include <linux/capability.h>
 
 #include "utils.h"
 #include "setup.h"
@@ -27,6 +29,7 @@ void setup_envs(sbx_input* input);
 char* setup_overlayfs(sbx_input* input);
 int boot_container(void* arg);
 void setup_dns(char* new_root);
+void drop_caps();
 
 
 int sbx_run_sandbox(sbx_input* input){
@@ -75,6 +78,7 @@ int boot_container(void* arg){
     
     char* new_root = setup_overlayfs(input);
     setup_dns(new_root);
+    drop_caps();
     pivot_root(new_root);
     setup_mounts();
     setup_envs(input);
@@ -117,6 +121,17 @@ void setup_dns(char* new_root){
 }
 
 /*
+    IN THE FUTURE: it should be taken from config.json
+*/
+void drop_caps(){
+
+    if(prctl(PR_CAPBSET_DROP, CAP_SYS_ADMIN) == -1){
+        perror("prctl");
+        exit(1);
+    }
+}
+
+/*
  * wrapper to system call pivot_root
  * essentially:
  *  mount --rbind overlay_upper overlay_upper
@@ -145,7 +160,7 @@ void pivot_root(char* new_root){
 /*
  * sets up all linux pseudofs
  * finishes up jailing (unmounts oldroot)
- * IN THE FUTURE: it should be taken from config.json
+ * IN THE FUTURE: it should be taken from config.json (aside from unmounting oldroot)
  */
 void setup_mounts(){
     // setup procfs because it gets unmounted
