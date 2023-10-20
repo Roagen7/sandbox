@@ -121,15 +121,43 @@ void setup_dns(char* new_root){
 }
 
 /*
-    IN THE FUTURE: it should be taken from config.json
-*/
+ * drop all the unneeded capabilities to prevent breakout
+ * IN THE FUTURE: it should be taken from config.json
+ */
+#define MAX_CAP 40
 void drop_caps(){
 
-    if(prctl(PR_CAPBSET_DROP, CAP_SYS_ADMIN) == -1){
-        perror("prctl");
-        exit(1);
+    int cap_keep[MAX_CAP] = { 0 };
+
+    // FUTURE: these should be set from config.json
+    cap_keep[CAP_AUDIT_WRITE] = 1;
+    cap_keep[CAP_KILL] = 1;
+    cap_keep[CAP_NET_BIND_SERVICE] = 1;
+
+    // always keep these
+    cap_keep[CAP_CHOWN] = 1;
+    cap_keep[CAP_DAC_OVERRIDE] = 1;
+    cap_keep[CAP_FOWNER] = 1;
+    cap_keep[CAP_FSETID] = 1;
+    cap_keep[CAP_SETGID] = 1;
+    cap_keep[CAP_SETUID] = 1;
+    cap_keep[CAP_SETPCAP] = 1;
+    cap_keep[CAP_SYS_CHROOT] = 1;
+    cap_keep[CAP_MKNOD] = 1;
+    cap_keep[CAP_SETFCAP] = 1;
+
+
+    for(int i = 0; i <= MAX_CAP; i++){
+        if(cap_keep[i]) continue;
+
+        if(prctl(PR_CAPBSET_DROP, i) == -1){
+            perror("prctl CAP_SYS_ADMIN");
+            fprintf(stderr, "[capnum]: %d", i);
+            exit(1);
+        }
     }
 }
+#undef MAX_CAP
 
 /*
  * wrapper to system call pivot_root
@@ -177,7 +205,7 @@ void setup_mounts(){
         perror("mount -t sysfs sysfs /sys");
         exit(1);
     }
-
+    
     // final step to jail the process - remove the access to root
     if(umount2("oldroot", MNT_DETACH) == -1){
         perror("umount -l oldroot");
