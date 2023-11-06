@@ -22,9 +22,6 @@
 #include <linux/seccomp.h>
 #include <seccomp.h>
 
-
-#include "external/seccomp-bpf.h"
-
 #include "utils.h"
 #include "setup.h"
 
