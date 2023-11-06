@@ -285,4 +285,5 @@ void setup_seccomp(){
     scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_ALLOW);
     seccomp_rule_add(ctx, SCMP_ACT_ERRNO(EPERM), SCMP_SYS(unshare), 0);
     seccomp_load(ctx);
+    seccomp_release(ctx);
 }
