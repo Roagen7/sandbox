@@ -19,6 +19,11 @@
 #include <string.h>
 #include <errno.h>
 #include <linux/capability.h>
+#include <linux/seccomp.h>
+#include <seccomp.h>
+
+
+#include "external/seccomp-bpf.h"
 
 #include "utils.h"
 #include "setup.h"
@@ -29,6 +34,7 @@ void setup_envs(sbx_input* input);
 char* setup_overlayfs(sbx_input* input);
 int boot_container(void* arg);
 void setup_dns(char* new_root);
+void setup_seccomp();
 void drop_caps();
 
 
@@ -82,11 +88,12 @@ int boot_container(void* arg){
     
     char* new_root = setup_overlayfs(input);
     setup_dns(new_root);
-    drop_caps();
+    if(!input->privileged) drop_caps();
     pivot_root(new_root);
     setup_mounts();
     setup_envs(input);
-	
+	if(input->seccomp) setup_seccomp();
+
     char* argv[256] = {NULL};
     argv[0] = input->exec;
     if(execvp(argv[0], argv) == -1){
@@ -267,4 +274,18 @@ char* setup_overlayfs(sbx_input* input){
     free(upper);
     free(work);
     return merged;
+}
+
+/*
+ * creates and applies seccomp filter
+ * at the moment only for unshare syscall
+ * 
+ * IN THE FUTURE: it should be taken from 
+ * some config like:
+ * https://raw.githubusercontent.com/moby/moby/master/profiles/seccomp/default.json
+ */
+void setup_seccomp(){
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_ALLOW);
+    seccomp_rule_add(ctx, SCMP_ACT_ERRNO(EPERM), SCMP_SYS(unshare), 0);
+    seccomp_load(ctx);
 }

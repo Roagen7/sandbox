@@ -13,6 +13,16 @@ char* get_param_value(const char* name, int argc, char** argv){
     return NULL;
 }
 
+// false by default
+int get_param_bool(const char* name, int argc, char** argv){
+    for(int i = 0; i < argc; i++){
+        if(!strcmp(argv[i],name)){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 sbx_input* sbx_cli_create_process(int argc, char** argv){
     static sbx_input input;
     input.exec = get_param_value("--exec", argc, argv);
@@ -40,6 +50,9 @@ sbx_input* sbx_cli_create_process(int argc, char** argv){
     } else {
         input.stack = 1024 * 1024; // defaults to 1MiB
     }
+
+    input.privileged = get_param_bool("--privileged", argc, argv);
+    input.seccomp = get_param_bool("--seccomp", argc, argv);
 
     return &input;
 }
