@@ -23,7 +23,6 @@
 #include <seccomp.h>
 
 #include "utils.h"
-#include "setup.h"
 
 void setup_mounts();
 void pivot_root(char* new_root);

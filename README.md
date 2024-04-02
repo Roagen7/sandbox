@@ -1,10 +1,29 @@
-steps to make a container 
-1. unshare --pid -mount-proc --mount --fork --user --map-root-user bash
-2. mount -t proc proc /proc
-3. mount --rbind dockerfs/ dockerfs/
-5. mount -t proc proc /proc
-6. mkdir oldroot
-7. pivot_root . oldroot
-8. mount -t proc proc /proc
-9. umount -l oldroot
-voilla
+## Description
+A simple container runtime made as a final project for OS software course.
+Features:
+- running containerized processes in premade rootfs
+- overlayfs
+- capabilities dropping
+- dns/network setup
+- basic seccomp configuration
+
+
+Dependencies:
+- libseccomp
+
+
+## Building
+```
+mkdir build
+
+cmake -DCMAKE_BUILD_TYPE=Debug -B./build -G Ninja
+ 
+cmake --build build/ --config Debug --target sandboxer_poc 
+```
+
+## Running
+
+example:
+```
+sudo build/sandboxer_poc --exec /bin/bash --rootfs images/ubuntu --name jammy --container_dir containers/jammy --seccomp
+```
